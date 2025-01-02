@@ -67,7 +67,7 @@ const createUser = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Error creating user:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error!"
@@ -76,6 +76,7 @@ const createUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
+    console.log("Login user API hit");
     const { email, password } = req.body;
 
     // Validation
@@ -97,30 +98,43 @@ const loginUser = async (req, res) => {
         }
 
         // Validate the password
-        if (!validPassword(password, user.password, user.salt)) {
-            return res.status(401).json({
+        try {
+            if (!validPassword(password, user.password, user.salt)) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Incorrect password!"
+                });
+            }
+        } catch (passwordError) {
+            console.error("Error validating password:", passwordError);
+            return res.status(500).json({
                 success: false,
-                message: "Incorrect password!"
+                message: "Password validation failed!"
             });
         }
 
         // Generate JWT token
-        const token = jwt.sign(
-            { id: user._id, is_admin: user.isAdmin },
-            process.env.JWT_SECRET,
-            { expiresIn: '1d' } // Token valid for 1 day
-        );
+        try {
+            const token = jwt.sign(
+                { id: user._id, is_admin: user.isAdmin },
+                process.env.JWT_SECRET,
+            );
 
-        // Send the token, userData, and success message to the user
-        res.status(200).json({
-            success: true,
-            message: "Login successful!",
-            token: token,
-            userData: { id: user._id, name: user.name, email: user.email }
-        });
-
+            res.status(200).json({
+                success: true,
+                message: "Login successful!",
+                token: token,
+                userData: { id: user._id, name: user.name, email: user.email }
+            });
+        } catch (tokenError) {
+            console.error("Error generating JWT:", tokenError);
+            return res.status(500).json({
+                success: false,
+                message: "JWT generation failed!"
+            });
+        }
     } catch (error) {
-        console.error(error);
+        console.error("Error during login:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error!"
