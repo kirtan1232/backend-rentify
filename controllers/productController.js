@@ -4,17 +4,17 @@ const fs = require('fs');
 
 // Create a new product
 const createProduct = async (req, res) => {
-    const { 
-        roomDescription, 
-        purpose, 
-        floor, 
-        status, 
-        rentPrice, 
-        parking, 
-        sellContactNo, 
-        bathroom, 
-        postedOn, 
-        expiredOn 
+    const {
+        roomDescription,
+        purpose,
+        floor,
+        status,
+        rentPrice,
+        parking,
+        sellContactNo,
+        bathroom,
+        postedOn,
+        expiredOn
     } = req.body;
 
     // Validate required fields
@@ -156,29 +156,40 @@ const deleteProduct = async (req, res) => {
 // Update a product
 const updateProduct = async (req, res) => {
     try {
+        let imageName;
+
+        // Check if a new image is provided
         if (req.files && req.files.roomImage) {
             const { roomImage } = req.files;
-            const imageName = `${Date.now()}-${roomImage.name}`;
+            imageName = `${Date.now()}-${roomImage.name}`;
             const imageUploadPath = path.join(__dirname, `../public/rooms/${imageName}`);
 
             // Upload new image
             await roomImage.mv(imageUploadPath);
 
-            // Update room image field
-            req.body.roomImage = imageName;
-
+            // Remove old image from the server if it exists
             const existingProduct = await productModel.findById(req.params.id);
-
-            // Remove old room image from the server
             if (existingProduct.roomImage) {
                 const oldImagePath = path.join(__dirname, `../public/rooms/${existingProduct.roomImage}`);
                 if (fs.existsSync(oldImagePath)) {
                     fs.unlinkSync(oldImagePath);
                 }
             }
+        } else {
+            // If no new image is uploaded, keep the existing image
+            const existingProduct = await productModel.findById(req.params.id);
+            imageName = existingProduct.roomImage;
         }
 
-        const updatedProduct = await productModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Update the product, including the roomImage if a new one is provided
+        const updatedProduct = await productModel.findByIdAndUpdate(
+            req.params.id,
+            {
+                ...req.body,
+                roomImage: imageName
+            },
+            { new: true }
+        );
 
         res.status(200).json({
             success: true,
@@ -194,6 +205,7 @@ const updateProduct = async (req, res) => {
         });
     }
 };
+
 
 // Search products by room description
 const searchProducts = async (req, res) => {
