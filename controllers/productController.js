@@ -2,74 +2,55 @@ const path = require('path');
 const productModel = require('../models/productModels');
 const fs = require('fs');
 
+// Helper function to move image and return the file name
+const moveImage = async (image) => {
+    const imageName = `${Date.now()}-${image.name}`;
+    const imageUploadPath = path.join(__dirname, `../public/rooms/${imageName}`);
+    await image.mv(imageUploadPath);
+    return imageName;
+};
+
 // Create a new product
 const createProduct = async (req, res) => {
     const {
-        roomDescription,
-        purpose,
+        roomDescription,   
         floor,
-        status,
+        address,
         rentPrice,
         parking,
-        sellContactNo,
+        contactNo,
         bathroom,
-        postedOn,
-        expiredOn
     } = req.body;
 
     // Validate required fields
-    if (!roomDescription || !purpose || !floor || !status || !rentPrice || !parking || !sellContactNo || !bathroom || !postedOn || !expiredOn) {
-        return res.status(400).json({
-            success: false,
-            message: "All required fields must be provided"
-        });
+    if (!roomDescription || !floor || !address || !rentPrice || !parking || !contactNo || !bathroom) {
+        return res.status(400).json({ success: false, message: "All required fields must be provided" });
     }
 
     // Check if room image is provided
     if (!req.files || !req.files.roomImage) {
-        return res.status(400).json({
-            success: false,
-            message: "Room image is required"
-        });
+        return res.status(400).json({ success: false, message: "Room image is required" });
     }
 
-    const { roomImage } = req.files;
-    const imageName = `${Date.now()}-${roomImage.name}`;
-    const imageUploadPath = path.join(__dirname, `../public/rooms/${imageName}`);
-
     try {
-        // Move image to the upload folder
-        await roomImage.mv(imageUploadPath);
+        const imageName = await moveImage(req.files.roomImage);
 
-        // Save product data to database
         const newProduct = new productModel({
             roomDescription,
-            purpose,
             floor,
-            status,
+            address,
             rentPrice,
             parking,
-            sellContactNo,
+            contactNo,
             bathroom,
-            postedOn,
-            expiredOn,
             roomImage: imageName
         });
 
         const product = await newProduct.save();
-
-        res.status(201).json({
-            success: true,
-            message: "Product Created Successfully!",
-            data: product
-        });
+        res.status(201).json({ success: true, message: "Product Created Successfully!", data: product });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error",
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
     }
 };
 
@@ -77,17 +58,10 @@ const createProduct = async (req, res) => {
 const getAllProducts = async (req, res) => {
     try {
         const products = await productModel.find({});
-        res.status(200).json({
-            success: true,
-            message: "Products fetched successfully!",
-            products: products
-        });
+        res.status(200).json({ success: true, message: "Products fetched successfully!", products });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -97,26 +71,14 @@ const getProduct = async (req, res) => {
 
     try {
         const product = await productModel.findById(productId);
-
         if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found'
-            });
+            return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
-        res.status(200).json({
-            success: true,
-            message: 'Product Fetched!',
-            product: product
-        });
+        res.status(200).json({ success: true, message: 'Product Fetched!', product });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Server Error',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
 
@@ -126,12 +88,8 @@ const deleteProduct = async (req, res) => {
 
     try {
         const product = await productModel.findByIdAndDelete(productId);
-
         if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found'
-            });
+            return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
         // Delete the image file from the server
@@ -140,16 +98,10 @@ const deleteProduct = async (req, res) => {
             fs.unlinkSync(oldImagePath);
         }
 
-        res.status(200).json({
-            success: true,
-            message: "Product Deleted Successfully!"
-        });
+        res.status(200).json({ success: true, message: "Product Deleted Successfully!" });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -161,11 +113,7 @@ const updateProduct = async (req, res) => {
         // Check if a new image is provided
         if (req.files && req.files.roomImage) {
             const { roomImage } = req.files;
-            imageName = `${Date.now()}-${roomImage.name}`;
-            const imageUploadPath = path.join(__dirname, `../public/rooms/${imageName}`);
-
-            // Upload new image
-            await roomImage.mv(imageUploadPath);
+            imageName = await moveImage(roomImage);
 
             // Remove old image from the server if it exists
             const existingProduct = await productModel.findById(req.params.id);
@@ -184,28 +132,16 @@ const updateProduct = async (req, res) => {
         // Update the product, including the roomImage if a new one is provided
         const updatedProduct = await productModel.findByIdAndUpdate(
             req.params.id,
-            {
-                ...req.body,
-                roomImage: imageName
-            },
+            { ...req.body, roomImage: imageName },
             { new: true }
         );
 
-        res.status(200).json({
-            success: true,
-            message: "Product Updated Successfully!",
-            updatedProduct
-        });
+        res.status(200).json({ success: true, message: "Product Updated Successfully!", updatedProduct });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error",
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
     }
 };
-
 
 // Search products by room description
 const searchProducts = async (req, res) => {
@@ -219,14 +155,11 @@ const searchProducts = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Search results fetched successfully!",
-            products: products
+            products
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 

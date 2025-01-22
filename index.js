@@ -61,21 +61,4 @@ app.listen(PORT, () => {
     console.log(`Server-app is Running on port ${PORT}`)
 })
 
-
-// API URL
-// http://localhost:5500/test
-
-
-// Task
-
-// Controller - Routes - Index.js
-// (Make a productController.js)
-// (Make a productRoutes.js)
-// (Link to index.js)
-
-// http://localhost:5000/api/product/create
-// Response : Product API is Working ...!
-
-
-// exporting for testing
 module.exports = app;

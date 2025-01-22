@@ -10,18 +10,15 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Room description is required'],
     },
-    purpose: {
-      type: String,
-      required: [true, 'Purpose is required'],
-    },
     floor: {
       type: String,
       required: [true, 'Floor number is required'],
     },
-    status: {
+    address: {
       type: String,
-      required: [true, 'Room status is required'],
+      required: [true, 'Address is required'],
     },
+   
     rentPrice: {
       type: Number,
       required: [true, 'Rent price is required'],
@@ -30,7 +27,7 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       required: [true, 'Parking availability is required'],
     },
-    sellContactNo: {
+    contactNo: {
       type: String,
       required: [true, 'Contact number is required'],
     },
@@ -38,14 +35,8 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Bathroom count is required'],
     },
-    postedOn: {
-      type: Date,
-      required: [true, 'Posted on date is required'],
-    },
-    expiredOn: {
-      type: Date,
-      required: [true, 'Expiration date is required'],
-    },
+    
+    
   },
   { timestamps: true }
 );
