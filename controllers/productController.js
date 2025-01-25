@@ -2,12 +2,24 @@ const path = require('path');
 const productModel = require('../models/productModels');
 const fs = require('fs');
 
+
 // Helper function to move image and return the file name
 const moveImage = async (image) => {
     const imageName = `${Date.now()}-${image.name}`;
     const imageUploadPath = path.join(__dirname, `../public/rooms/${imageName}`);
-    await image.mv(imageUploadPath);
-    return imageName;
+    
+    try {
+        // Ensure the destination directory exists
+        if (!fs.existsSync(path.join(__dirname, '../public/rooms'))) {
+            fs.mkdirSync(path.join(__dirname, '../public/rooms'), { recursive: true });
+        }
+
+        // Move the image to the destination folder
+        await image.mv(imageUploadPath);
+        return imageName;
+    } catch (err) {
+        throw new Error('Error moving image file');
+    }
 };
 
 // Create a new product
@@ -66,21 +78,22 @@ const getAllProducts = async (req, res) => {
 };
 
 // Fetch a single product
+
+
 const getProduct = async (req, res) => {
-    const productId = req.params.id;
-
     try {
-        const product = await productModel.findById(productId);
+        const product = await productModel.findById(req.params.id);
         if (!product) {
-            return res.status(404).json({ success: false, message: 'Product not found' });
+            return res.status(404).json({ success: false, message: "Product not found" });
         }
-
-        res.status(200).json({ success: true, message: 'Product Fetched!', product });
+        res.status(200).json({ success: true, product });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+        res.status(500).json({ success: false, message: "Error fetching product details", error: error.message });
     }
 };
+
+
 
 // Delete a product and its associated image
 const deleteProduct = async (req, res) => {

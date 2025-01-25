@@ -24,6 +24,7 @@
     "express": "^4.21.2",
     "express-fileupload": "^1.5.1",
     "express-validator": "^7.2.0",
+    "formidable": "^3.5.2",
     "jest": "^29.7.0",
     "jsonwebtoken": "^9.0.2",
     "khalti-checkout-web": "^2.2.0",
