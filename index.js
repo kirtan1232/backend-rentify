@@ -1,64 +1,25 @@
-// 1.Imporing express
-const express = require('express');
-const dotenv = require('dotenv');
-const connectDB = require('./database/database');
-const cors = require('cors')
-const fileUpload = require('express-fileupload')
-const path = require('path')
+const express = require("express");
+const cors = require("cors");
+const connectDb = require("./config/db");
+const AuthRouter = require("./routes/authRoutes");
+const protectedRouter = require("./routes/protectedRoutes");
 
-
-// 2. Creating an express app
 const app = express();
 
-// JSON Config
-app.use(express.json())
+connectDb();
 
-// File Upload Config
-app.use(fileUpload())
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
-// Make a public folder access to outside
-app.use(express.static('./public'))
+app.use(express.json());
 
+app.use("/api/auth", AuthRouter);
+app.use("/api/protected", protectedRouter);
 
-
-// CORS Config
-const corsOptions = {
-    origin: true,
-    credentials: true, // dont forget 's'
-    optionSuccessStatus: 200
-}
-app.use(cors(corsOptions))
-
-// configuration dotenv
-dotenv.config()
-
-// Connecting to the database
-connectDB();
-
-// 3. Defining the port
-const PORT = process.env.PORT;
-
-
-
-// 4. Creating a test route or endpoint
-app.get('/test', (req, res) => {
-    res.send("Test Api is Working ...!")
-})
-
-// Configuring routes
-app.use('/api/user', require('./routes/userRoutes'))
-app.use('/api/product', require('./routes/productRoutes'))
-
-// route reult
-// http://localhost:5000/api/product/create
-
-
-// http://localhost:5000/api/user/create
-
-
-// Starting the server
-app.listen(PORT, () => {
-    console.log(`Server-app is Running on port ${PORT}`)
-})
-
-module.exports = app;
+const port = 3000;
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
