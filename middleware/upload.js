@@ -1,33 +1,33 @@
-// const multer = require('multer');
-// const path = require('path');
+const multer = require("multer");
+const path = require("path");
 
-// // Set up multer storage options
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     // The destination folder for uploaded images
-//     cb(null, 'public/rooms'); // Specify folder where you want to store the image
-//   },
-//   filename: function (req, file, cb) {
-//     // Generate a unique file name to avoid overwriting
-//     cb(null, Date.now() + path.extname(file.originalname)); // Append current timestamp to the filename
-//   }
-// });
+// Set the storage engine for Multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Folder to store the uploaded files
+  },
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      `${Date.now()}-${file.fieldname}${path.extname(file.originalname)}`
+    ); // Create a unique filename using the timestamp
+  },
+});
 
-// // File filter to allow only image files (jpeg, png, jpg)
-// const fileFilter = (req, file, cb) => {
-//   const allowedFileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-//   if (allowedFileTypes.includes(file.mimetype)) {
-//     cb(null, true); // Accept the file
-//   } else {
-//     cb(new Error('Only image files are allowed'), false); // Reject other file types
-//   }
-// };
+// Set file upload limits and filter for image types
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max file size 5MB
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /jpeg|jpg|png/;
+    const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = fileTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true); // Accept the file
+    } else {
+      cb("Error: Only image files are allowed!");
+    }
+  },
+});
 
-// // Initialize multer with the storage and file filter options
-// const upload = multer({
-//   storage,
-//   fileFilter,
-//   limits: { fileSize: 5 * 1024 * 1024 } // Optional: Limit file size to 5MB
-// });
-
-// module.exports = upload;
+module.exports = upload;
