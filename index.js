@@ -4,6 +4,8 @@ const connectDb = require("./config/db");
 const AuthRouter = require("./routes/authRoutes");
 const protectedRouter = require("./routes/protectedRoutes");
 const roomRoutes = require("./routes/roomRoutes");
+const userRoutes = require("./routes/userRoutes");
+
 
 const app = express();
 
@@ -21,6 +23,7 @@ app.use(express.json());
 app.use("/api/auth", AuthRouter);
 app.use("/api/protected", protectedRouter);
 app.use("/api/rooms", roomRoutes);  // Add room routes here
+app.use("/api/user", userRoutes);
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static("uploads"));
