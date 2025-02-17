@@ -8,13 +8,13 @@ const config = require('../config/config');
 
 // Register a new user
 const registerUser = async (req, res) => {
-    const { name, email, password, confirm_password,  role } = req.body;
+    const { name, email, password, confirm_password, role } = req.body;
 
     try {
         // Check if user already exists
         const userExist = await User.findOne({ email });
         if (userExist) {
-            res.status(400).json({ success: false, message: "Email already exists" });
+            return res.status(400).json({ success: false, message: "Email already exists" });
         }
 
         // Hash password
@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
         res.status(200).json({ success: true, message: "User registered successfully!" });
     } catch (err) {
         console.error(err);
-        res.status(500).json({success:false, message: 'Error registering user' });
+        res.status(500).json({ success: false, message: 'Error registering user' });
     }
 };
 
@@ -182,15 +182,42 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+  const { name, email, password, role } = req.body;
+  const userId = req.params.id;
 
+  try {
+      // Find the user by ID
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({ success: false, message: 'User not found' });
+      }
 
+      // Update user fields
+      if (name) user.name = name;
+      if (email) user.email = email;
+      if (role) user.role = role;
 
+      // If a new password is provided, hash it and update
+      if (password) {
+          const hashedPassword = await bcrypt.hash(password, 10);
+          user.password = hashedPassword;
+      }
 
+      // Save the updated user
+      await user.save();
 
+      res.status(200).json({ success: true, message: 'User updated successfully', user });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Error updating user', error });
+  }
+};
 module.exports = {
     registerUser,
     loginUser,
     forgotPassword,
     sendResetPasswordMail,
     resetPassword,
+    updateUser,
 };
