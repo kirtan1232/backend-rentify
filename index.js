@@ -5,6 +5,7 @@ const AuthRouter = require("./routes/authRoutes");
 const protectedRouter = require("./routes/protectedRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 const userRoutes = require("./routes/userRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
 
 
 const app = express();
@@ -24,8 +25,7 @@ app.use("/api/auth", AuthRouter);
 app.use("/api/protected", protectedRouter);
 app.use("/api/rooms", roomRoutes);  // Add room routes here
 app.use("/api/user", userRoutes);
-
-// Serve static files from the "uploads" directory
+app.use('/api', wishlistRoutes);
 app.use("/uploads", express.static("uploads"));
 
 const port = 3000;
