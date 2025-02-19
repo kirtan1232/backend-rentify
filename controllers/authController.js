@@ -8,40 +8,47 @@ const config = require('../config/config');
 
 // Register a new user
 const registerUser = async (req, res) => {
-    const { name, email, password, confirm_password, role } = req.body;
-    let image = null;
-
-    // Check if an image was uploaded
-    if (req.file) {
-        image = req.file.path; // Store the path of the uploaded image
-    }
-
     try {
+        const { name, email, password, confirm_password, role } = req.body;
+        let image = req.file ? req.file.path : null;
+
+        // Validate required fields
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
         // Check if user already exists
         const userExist = await User.findOne({ email });
         if (userExist) {
-            return res.status(400).json({ success: false, message: "Email already exists" });
+            return res.status(400).json({ message: "Email already exists" });
         }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Create new user
         const user = new User({
             name,
             email,
-            password: hashedPassword,// Store the hashed password
-            confirm_password, 
+            password: hashedPassword,
+            confirm_password,
             role,
-            image, // Add the image path to the user document
+            image,
         });
 
         await user.save();
-        res.status(200).json({ success: true, message: "User registered successfully!" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Error registering user' });
+
+        // Log success message in the console
+        console.log("User registered successfully!");
+
+        // Send success response with a message
+        res.status(201).json({ success: true, message: "User registered successfully!" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error registering user", error });
     }
 };
+
 const uploadImage = async (req, res) => {
     if (!req.file) {
         return res.status(400).send({ message: "Please upload a file" });
