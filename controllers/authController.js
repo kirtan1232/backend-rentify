@@ -9,6 +9,12 @@ const config = require('../config/config');
 // Register a new user
 const registerUser = async (req, res) => {
     const { name, email, password, confirm_password, role } = req.body;
+    let image = null;
+
+    // Check if an image was uploaded
+    if (req.file) {
+        image = req.file.path; // Store the path of the uploaded image
+    }
 
     try {
         // Check if user already exists
@@ -23,9 +29,10 @@ const registerUser = async (req, res) => {
         const user = new User({
             name,
             email,
-            password: hashedPassword, // Store the hashed password
+            password: hashedPassword,// Store the hashed password
+            confirm_password, 
             role,
-            confirm_password,
+            image, // Add the image path to the user document
         });
 
         await user.save();
@@ -35,7 +42,27 @@ const registerUser = async (req, res) => {
         res.status(500).json({ success: false, message: 'Error registering user' });
     }
 };
+const uploadImage = async (req, res) => {
+    if (!req.file) {
+        return res.status(400).send({ message: "Please upload a file" });
+    }
 
+    try {
+        // Save the file path to the database
+        const user = new User({
+            profilePicture: req.file.path,
+        });
+
+        await user.save();
+        res.status(200).json({
+            success: true,
+            data: req.file.filename,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error saving file to database" });
+    }
+};
 
 // Login a user
 const loginUser = async (req, res) => {
@@ -191,5 +218,6 @@ module.exports = {
     forgotPassword,
     sendResetPasswordMail,
     resetPassword,
+    uploadImage,
    
 };

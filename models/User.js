@@ -1,6 +1,10 @@
 const mongoose = require('mongoose'); // Ensure this line is not repeated
 
 const userSchema = new mongoose.Schema({
+    image: {
+        type: String,
+        default: null,
+      },
     name: {
         type: String,
         required: true,
