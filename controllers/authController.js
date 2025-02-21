@@ -1,74 +1,69 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const randomstring = require('randomstring');
 const User = require('../models/User'); // Changed to CommonJ
 const config = require('../config/config');
 
-// Register a new user
+
+
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, confirm_password, role } = req.body;
-        let image = req.file ? req.file.path : null;
-
-        // Validate required fields
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        // Check if user already exists
-        const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.status(400).json({ message: "Email already exists" });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create new user
-        const user = new User({
-            name,
-            email,
-            password: hashedPassword,
-            confirm_password,
-            role,
-            image,
-        });
-
-        await user.save();
-
-        // Log success message in the console
-        console.log("User registered successfully!");
-
-        // Send success response with a message
-        res.status(201).json({ success: true, message: "User registered successfully!" });
+      const { name, email, password, confirm_password, role } = req.body;
+      let image = req.file ? req.file.path : null;
+  
+      // Validate required fields
+      if (!name || !email || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+  
+      // Check if user already exists
+      const userExist = await User.findOne({ email });
+      if (userExist) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+  
+      // Create new user (NO manual hashing here)
+      const user = new User({
+        name,
+        email,
+        password,  // <-- Let Mongoose handle hashing in the model
+        confirm_password,
+        role,
+        image,
+      });
+  
+      // Generate token
+      const token = jwt.sign(
+        { id: user._id, email: user.email, role: user.role },
+        process.env.JWT_SECRET || "SECRETHO",
+        { expiresIn: "1h" }
+      );
+  
+      // Save token to user document
+      user.token = token;
+      await user.save();
+  
+      res.status(201).json({
+        success: true,
+        message: "User registered successfully!",
+        token,
+      });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error registering user", error });
+      console.error(error);
+      res.status(500).json({ message: "Error registering user", error });
     }
-};
+  };
+  
 
-const uploadImage = async (req, res) => {
+const uploadImage = async (req, res, next) => {
     if (!req.file) {
         return res.status(400).send({ message: "Please upload a file" });
     }
-
-    try {
-        // Save the file path to the database
-        const user = new User({
-            profilePicture: req.file.path,
-        });
-
-        await user.save();
-        res.status(200).json({
-            success: true,
-            data: req.file.filename,
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "Error saving file to database" });
-    }
+    res.status(200).json({
+        success: true,
+        data: req.file.filename,
+    });
 };
 
 // Login a user
@@ -92,7 +87,7 @@ const loginUser = async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'your_secret_key',
+            process.env.JWT_SECRET || 'SECRETHO',
             { expiresIn: '1h' }
         );
 
@@ -101,7 +96,8 @@ const loginUser = async (req, res) => {
             message: 'Login successful', 
             token, 
             role: user.role, 
-            name: user.name 
+            name: user.name,
+            _id: user._id 
         });
     } catch (error) {
         console.error(error);
