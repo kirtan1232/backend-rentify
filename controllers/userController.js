@@ -1,7 +1,34 @@
 // controllers/authController.js
+const asyncHandler = require("../middleware/async");
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+
+// Add this to your authController.js
+const getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'User not found' 
+            });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            user 
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error fetching user',
+            error: error.message 
+        });
+    }
+};
 
 const getAllUsers = async (req, res) => {
     // Get all users excluding passwords
@@ -12,6 +39,7 @@ const getAllUsers = async (req, res) => {
         users 
     });
 };
+
 
 const updateUser = async (req, res) => {
     const { name, email, password, role } = req.body;
@@ -29,11 +57,11 @@ const updateUser = async (req, res) => {
         if (email) user.email = email;
         if (role) user.role = role;
   
-        // If a new password is provided, hash it and update
-        if (password) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user.password = hashedPassword;
-        }
+        // // If a new password is provided, hash it and update
+        // if (password) {
+        //     const hashedPassword = await bcrypt.hash(password, 10);
+        //     user.password = hashedPassword;
+        // }
   
         // Save the updated user
         await user.save();
@@ -63,6 +91,7 @@ const authenticateToken = (req, res, next) => {
 };
 
 module.exports = {
+    getUserById,
     getAllUsers,
     updateUser,
     authenticateToken,
