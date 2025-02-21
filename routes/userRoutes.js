@@ -1,10 +1,11 @@
 // routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const { updateUser,getAllUsers } = require('../controllers/userController');
+const { updateUser,getAllUsers,getUserById } = require('../controllers/userController');
 const User = require('../models/User');
 
 // Update user by ID
+router.get('/customer/:id ', getUserById);
 router.put('/update/:id',  updateUser);
 router.get('/customer',  getAllUsers);
 // Get user by ID
