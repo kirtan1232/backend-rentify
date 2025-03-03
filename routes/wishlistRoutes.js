@@ -1,41 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken } = require('../middleware/authMiddleware'); // Adjust the path
-const User = require('../models/User'); // Adjust the path to your User model
+const { protect } = require('../middleware/auth');
+const User = require('../models/User');
 
-// Add to Wishlist
-router.post('/wishlist/add/:roomId', verifyToken, async (req, res) => {
+router.post('/wishlist/add/:roomId', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Ensure wishlist is an array (for older users without the field)
+    if (!Array.isArray(user.wishlist)) {
+      user.wishlist = [];
+    }
+
     if (!user.wishlist.includes(req.params.roomId)) {
       user.wishlist.push(req.params.roomId);
       await user.save();
     }
     res.status(200).json({ message: "Added to wishlist" });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error('Wishlist add error:', error);
+    res.status(500).json({ error: "Server error", details: error.message });
   }
 });
 
-// Get Wishlist
-router.get('/wishlist', verifyToken, async (req, res) => {
+router.get('/wishlist', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('wishlist');
-    res.json(user.wishlist);
+    const user = await User.findById(req.user.id).populate('wishlist');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user.wishlist || []);
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error('Wishlist get error:', error);
+    res.status(500).json({ error: "Server error", details: error.message });
   }
 });
 
-// Remove from Wishlist (Optional)
-router.delete('/wishlist/remove/:roomId', verifyToken, async (req, res) => {
+router.delete('/wishlist/remove/:roomId', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    user.wishlist = user.wishlist.filter(id => id !== req.params.roomId);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.wishlist = user.wishlist.filter(id => id.toString() !== req.params.roomId);
     await user.save();
     res.status(200).json({ message: "Removed from wishlist" });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error('Wishlist remove error:', error);
+    res.status(500).json({ error: "Server error", details: error.message });
   }
 });
 

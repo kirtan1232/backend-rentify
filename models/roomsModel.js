@@ -30,6 +30,7 @@ const roomSchema = new mongoose.Schema({
   },
   bathroom: {
     type: Number,
+    
     required: true,
   },
   roomImage: {
