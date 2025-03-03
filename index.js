@@ -9,7 +9,7 @@ const userRoutes = require("./routes/userRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const emailRoutes = require('./routes/emailRoutes');
 const contactRoutes = require('./routes/contactRoutes');
-
+const esewaRoutes = require('./routes/esewaRoutes');
 require('dotenv').config();
 
 
@@ -34,6 +34,7 @@ app.use("/api/user", userRoutes);
 app.use('/api', wishlistRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api', contactRoutes);
+app.use('/api/esewa', esewaRoutes);
 app.use("/uploads", express.static("uploads"));
 
 const port = 3000;
